@@ -5,7 +5,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-
     MODE: Literal["DEV", "TEST", "PROD"]
 
     APP_NAME: str
@@ -19,6 +18,9 @@ class Settings(BaseSettings):
 
     TEST_DB_NAME: str
 
+    REDIS_HOST: str
+    REDIS_PORT: int
+
     @property
     def DATABASE_URL(self) -> str:
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
@@ -26,7 +28,6 @@ class Settings(BaseSettings):
     @property
     def TEST_DATABASE_URL(self) -> str:
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.TEST_DB_NAME}"
-
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

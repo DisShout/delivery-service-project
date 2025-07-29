@@ -6,16 +6,17 @@ from typing import AsyncGenerator
 settings = get_settings()
 
 engine = create_async_engine(
-    settings.DATABASE_URL, 
+    settings.DATABASE_URL,
     echo=True,
     pool_pre_ping=True,
 )
 
 AsyncSessionLocal = async_sessionmaker(
-    bind=engine, 
+    bind=engine,
     class_=AsyncSession,
     expire_on_commit=False,
 )
+
 
 class Base(DeclarativeBase):
     pass
