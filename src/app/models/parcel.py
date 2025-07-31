@@ -31,7 +31,7 @@ class Parcel(Base):
         nullable=False,
     )
 
-    type: Mapped["ParcelType"] = relationship(back_populates="parcels")  # pyright: ignore[reportUndefinedVariable]  # noqa: F821
+    type: Mapped["ParcelType"] = relationship(back_populates="parcels", lazy="joined")  # pyright: ignore[reportUndefinedVariable]  # noqa: F821
 
     def __repr__(self):
         return f"<Parcel(id={self.id}, name={self.name}, weight={self.weight}, type_id={self.type_id})>"

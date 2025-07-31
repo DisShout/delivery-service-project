@@ -22,6 +22,6 @@ class CurrencyService:
 
         rate = await self.currency_client.get_current_currency()
 
-        await self.redis.set(self.cache_key, rate, ex=60 * 30)  # ttl 30 минут
+        await self.redis.set(self.cache_key, rate, ex=60 * 30)  # ttl 30 minutes
 
         return float(rate)

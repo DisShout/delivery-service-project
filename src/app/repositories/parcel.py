@@ -1,6 +1,10 @@
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from src.app.models.parcel_type import ParcelType
 from src.app.models.parcel import Parcel
-from src.app.schemas.parcel import ParcelCreate
+from src.app.schemas.parcel import ParcelCreate, ParcelFilter
+from sqlalchemy.orm import joinedload
+import uuid
 
 
 class ParcelRepository:
@@ -19,3 +23,37 @@ class ParcelRepository:
         await self.db.commit()
         await self.db.refresh(parcel)
         return parcel
+
+    async def get_parecels_by_session_id(
+        self, session_id: str, filters: ParcelFilter
+    ) -> list[Parcel]:
+        query = (
+            select(Parcel)
+            .join(Parcel.type)
+            .options(joinedload(Parcel.type))
+            .where(Parcel.session_id == session_id)
+        )
+
+        if filters.type_name:
+            query = query.where(ParcelType.name == filters.type_name)
+
+        if filters.has_delivery_price is not None:
+            if filters.has_delivery_price:
+                query = query.where(Parcel.delivery_price_rub.isnot(None))
+            else:
+                query = query.where(Parcel.delivery_price_rub.is_(None))
+
+        query = query.limit(filters.limit).offset(filters.offset)
+
+        result = await self.db.execute(query)
+        return result.scalars().all()
+
+    async def get_by_id(self, parcel_id: uuid.UUID, session_id: str) -> Parcel | None:
+        query = (
+            select(Parcel)
+            .join(Parcel.type)
+            .options(joinedload(Parcel.type))
+            .where(Parcel.id == parcel_id, Parcel.session_id == session_id)
+        )
+        result = await self.db.execute(query)
+        return result.scalar_one_or_none()
