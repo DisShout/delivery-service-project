@@ -2,7 +2,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.parcel import Parcel
+from src.app.models.parcel import Parcel
 from src.app.services.currency_service import CurrencyService
 from src.app.repositories.parcel import ParcelRepository
 from src.app.schemas.parcel import (
@@ -19,7 +19,7 @@ class ParcelService:
         self.repo = ParcelRepository(db)
         self.currency_service = CurrencyService()
 
-    async def create(self, data: ParcelCreate, session_id: str):
+    async def create(self, data: ParcelCreate, session_id: str) -> Parcel:
         return await self.repo.create(data=data, session_id=session_id)
 
     async def get_parcels_by_session_id(
@@ -75,9 +75,14 @@ class ParcelService:
         delivery_price = base_cost * usd_to_rub
         return delivery_price.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
-    # async def update_delivery_price(self, parcel: Parcel):
-    #     parcel.delivery_price_rub = await self.calculate_delivery_price(parcel)
-    #     self.repo.db.add(parcel)
-    #     await self.repo.db.commit()
-    #     await self.repo.db.refresh(parcel)
-    #     return parcel
+    async def update_delivery_price(self, parcel: Parcel) -> Parcel:
+        parcel.delivery_price_rub = await self.calculate_delivery_price(parcel)
+        return await self.repo.save(parcel)
+
+    async def update_all_unpriced(self) -> list[Parcel]:
+        parcels = await self.repo.get_unpriced_parcels()
+        updated = []
+        for parcel in parcels:
+            updated_parcel = await self.update_delivery_price(parcel)
+            updated.append(updated_parcel)
+        return updated

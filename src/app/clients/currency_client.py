@@ -8,6 +8,6 @@ class CurrencyClient:
     async def get_current_currency(self):
         async with httpx.AsyncClient() as client:
             response = await client.get(self.url)
-            data = response.json()
+            data = await response.json()
             rate = data["Valute"]["USD"]["Value"]
             return rate

@@ -57,3 +57,18 @@ class ParcelRepository:
         )
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
+
+    async def get_unpriced_parcels(self) -> list[Parcel]:
+        query = (
+            select(Parcel)
+            .options(joinedload(Parcel.type))
+            .where(Parcel.delivery_price_rub.is_(None))
+        )
+        result = await self.db.execute(query)
+        return result.scalars().all()
+
+    async def save(self, parcel: Parcel) -> Parcel:
+        self.db.add(parcel)
+        await self.db.commit()
+        await self.db.refresh(parcel)
+        return parcel
