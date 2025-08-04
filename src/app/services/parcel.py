@@ -15,16 +15,24 @@ import uuid
 
 
 class ParcelService:
+    """Сервис для работы с посылками: создание, получение, расчёт стоимости."""
+
     def __init__(self, db: AsyncSession):
         self.repo = ParcelRepository(db)
         self.currency_service = CurrencyService()
 
-    async def create(self, data: ParcelCreateDB, session_id: str) -> Parcel:
-        return await self.repo.create(data=data, session_id=session_id)
+    async def create(
+        self, data: ParcelCreateDB, session_id: str, parcel_id: uuid.UUID
+    ) -> Parcel:
+        """Создаёт новую посылку в базе."""
+        return await self.repo.create(
+            data=data, session_id=session_id, parcel_id=parcel_id
+        )
 
     async def get_parcels_by_session_id(
         self, session_id: str, filters: ParcelFilter
     ) -> list[ParcelRead]:
+        """Получает список посылок для текущей сессии с фильтрацией и пагинацией."""
         parcels = await self.repo.get_parecels_by_session_id(
             session_id=session_id, filters=filters
         )
@@ -35,9 +43,7 @@ class ParcelService:
                     "name": p.name,
                     "weight": p.weight,
                     "parcel_price_usd": p.parcel_price_usd,
-                    "delivery_price_rub": str(p.delivery_price_rub)
-                    if p.delivery_price_rub is not None
-                    else "Не рассчитано",
+                    "delivery_price_rub": p.delivery_price_rub,
                     "created_at": p.created_at,
                     "updated_at": p.updated_at,
                     "type_name": p.type.name if p.type else "Неизвестно",
@@ -49,6 +55,7 @@ class ParcelService:
     async def get_by_id(
         self, session_id: str, parcel_id: uuid.UUID
     ) -> ParcelReadByID | None:
+        """Получает данные о посылке по её ID."""
         parcel = await self.repo.get_by_id(parcel_id=parcel_id, session_id=session_id)
         if not parcel:
             raise HTTPException(
@@ -60,16 +67,15 @@ class ParcelService:
                 "name": parcel.name,
                 "weight": parcel.weight,
                 "parcel_price_usd": parcel.parcel_price_usd,
-                "delivery_price_rub": str(parcel.delivery_price_rub)
-                if parcel.delivery_price_rub is not None
-                else "Не рассчитано",
+                "delivery_price_rub": parcel.delivery_price_rub,
                 "type_name": parcel.type.name if parcel.type else "Неизвестно",
             }
         )
 
     async def calculate_delivery_price_and_create_parcel(
-        self, parcel: dict, session_id: str
-    ) -> Decimal:
+        self, parcel: dict, session_id: str, parcel_id: uuid.UUID
+    ):
+        """Рассчитывает стоимость доставки и сохраняет посылку в базу"""
         usd_to_rub = await self.currency_service.get_usd_to_rub()
         usd_to_rub_decimal = Decimal(str(usd_to_rub))
 
@@ -83,16 +89,4 @@ class ParcelService:
         parcel["delivery_price_rub"] = delivery_price
 
         parcel = ParcelCreateDB.model_validate(parcel)
-        await self.create(parcel, session_id)
-
-    async def update_delivery_price(self, parcel: Parcel) -> Parcel:
-        parcel.delivery_price_rub = await self.calculate_delivery_price(parcel)
-        return await self.repo.save(parcel)
-
-    async def update_all_unpriced(self) -> list[Parcel]:
-        parcels = await self.repo.get_unpriced_parcels()
-        updated = []
-        for parcel in parcels:
-            updated_parcel = await self.update_delivery_price(parcel)
-            updated.append(updated_parcel)
-        return updated
+        await self.create(parcel, session_id, parcel_id)

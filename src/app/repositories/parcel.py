@@ -11,8 +11,11 @@ class ParcelRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create(self, data: ParcelCreateDB, session_id: str) -> Parcel:
+    async def create(
+        self, data: ParcelCreateDB, session_id: str, parcel_id: uuid.UUID
+    ) -> Parcel:
         parcel = Parcel(
+            id=parcel_id,
             name=data.name,
             weight=data.weight,
             parcel_price_usd=data.parcel_price_usd,
@@ -67,9 +70,3 @@ class ParcelRepository:
         )
         result = await self.db.execute(query)
         return result.scalars().all()
-
-    async def save(self, parcel: Parcel) -> Parcel:
-        self.db.add(parcel)
-        await self.db.commit()
-        await self.db.refresh(parcel)
-        return parcel

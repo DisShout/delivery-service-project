@@ -6,11 +6,10 @@ from src.rabbitmq.base import BaseRabbitMQClient
 from src.app.core.config import get_settings
 
 settings = get_settings()
-print(">>> Consumer DB_URL:", settings.DATABASE_URL)
 
 
 class RabbitMQConsumer(BaseRabbitMQClient):
-    """Слушатель очереди RabbitMQ с использованием базового клиента."""
+    """Слушатель очереди RabbitMQ."""
 
     def __init__(self):
         super().__init__()
@@ -29,7 +28,7 @@ class RabbitMQConsumer(BaseRabbitMQClient):
                             await self.handle_message(message)
 
     async def _declare_or_get_queue(self, channel):
-        """Объявляет очередь и обменник, затем биндит их."""
+        """Объявляет или получает очередь RabbitMQ."""
         exchange = await channel.declare_exchange(
             self.rabbit_topic,  # "parcel"
             type="direct",  # можно fanout или topic, зависит от логики
@@ -44,6 +43,7 @@ class RabbitMQConsumer(BaseRabbitMQClient):
         return queue
 
     async def handle_message(self, message: IncomingMessage):
+        """Обрабатывает входящее сообщение."""
         msg_data = json.loads(message.body.decode())
 
         await self.rabbit_service.process_message(msg_data)
