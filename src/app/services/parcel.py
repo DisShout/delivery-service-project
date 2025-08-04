@@ -6,7 +6,7 @@ from src.app.models.parcel import Parcel
 from src.app.services.currency_service import CurrencyService
 from src.app.repositories.parcel import ParcelRepository
 from src.app.schemas.parcel import (
-    ParcelCreate,
+    ParcelCreateDB,
     ParcelFilter,
     ParcelRead,
     ParcelReadByID,
@@ -19,7 +19,7 @@ class ParcelService:
         self.repo = ParcelRepository(db)
         self.currency_service = CurrencyService()
 
-    async def create(self, data: ParcelCreate, session_id: str) -> Parcel:
+    async def create(self, data: ParcelCreateDB, session_id: str) -> Parcel:
         return await self.repo.create(data=data, session_id=session_id)
 
     async def get_parcels_by_session_id(
@@ -67,13 +67,23 @@ class ParcelService:
             }
         )
 
-    async def calculate_delivery_price(self, parcel: Parcel) -> Decimal:
+    async def calculate_delivery_price_and_create_parcel(
+        self, parcel: dict, session_id: str
+    ) -> Decimal:
         usd_to_rub = await self.currency_service.get_usd_to_rub()
-        base_cost = parcel.weight * Decimal("0.5") + parcel.parcel_price_usd * Decimal(
-            "0.01"
+        usd_to_rub_decimal = Decimal(str(usd_to_rub))
+
+        base_cost = Decimal(parcel["weight"]) * Decimal("0.5") + Decimal(
+            parcel["parcel_price_usd"]
+        ) * Decimal("0.01")
+        delivery_price = (base_cost * usd_to_rub_decimal).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
         )
-        delivery_price = base_cost * usd_to_rub
-        return delivery_price.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        parcel["delivery_price_rub"] = delivery_price
+
+        parcel = ParcelCreateDB.model_validate(parcel)
+        await self.create(parcel, session_id)
 
     async def update_delivery_price(self, parcel: Parcel) -> Parcel:
         parcel.delivery_price_rub = await self.calculate_delivery_price(parcel)

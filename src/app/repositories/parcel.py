@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.app.models.parcel_type import ParcelType
 from src.app.models.parcel import Parcel
-from src.app.schemas.parcel import ParcelCreate, ParcelFilter
+from src.app.schemas.parcel import ParcelCreateDB, ParcelFilter
 from sqlalchemy.orm import joinedload
 import uuid
 
@@ -11,13 +11,14 @@ class ParcelRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create(self, data: ParcelCreate, session_id: str) -> Parcel:
+    async def create(self, data: ParcelCreateDB, session_id: str) -> Parcel:
         parcel = Parcel(
             name=data.name,
             weight=data.weight,
             parcel_price_usd=data.parcel_price_usd,
             type_id=data.type_id,
             session_id=session_id,
+            delivery_price_rub=data.delivery_price_rub,
         )
         self.db.add(parcel)
         await self.db.commit()

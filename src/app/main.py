@@ -1,5 +1,5 @@
-# src/app/main.py
 from fastapi import FastAPI, Depends
+from src.app.core.config import get_settings
 from src.app.services.currency_service import CurrencyService
 from src.app.core.middleware import SessionMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,3 +28,14 @@ async def ping_db(db: AsyncSession = Depends(get_db)):
 @app.get("/currency")
 async def get_currency():
     return await CurrencyService().get_usd_to_rub()
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
+@app.get("/debug")
+async def debug():
+    settings = get_settings()
+    return {"db_url": settings.DATABASE_URL}

@@ -1,10 +1,10 @@
 import uuid
 from fastapi import APIRouter, Request, Depends
+from src.rabbitmq.service import RabbitService
 from src.app.core.database import get_db
 from src.app.services.parcel import ParcelService
 from src.app.schemas.parcel import (
     ParcelCreate,
-    ParcelCreateResponse,
     ParcelFilter,
     ParcelRead,
     ParcelReadByID,
@@ -15,11 +15,11 @@ router = APIRouter(prefix="/parcels", tags=["Parcels"])
 
 
 @router.post("/")
-async def create_parcel(
-    request: Request, data: ParcelCreate, db: AsyncSession = Depends(get_db)
-) -> ParcelCreateResponse:
+async def create_parcel(request: Request, data: ParcelCreate) -> None:
     session_id = request.state.session_id
-    return await ParcelService(db).create(data=data, session_id=session_id)
+    return await RabbitService().send_message_to_rabbit(
+        message=data, session_id=session_id
+    )
 
 
 @router.get("/", response_model=list[ParcelRead])

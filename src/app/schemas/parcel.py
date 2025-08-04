@@ -8,11 +8,17 @@ class ParcelCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     name: str = Field(..., max_length=300, description="Название посылки")
-    weight: Decimal = Field(..., gt=0, description="Вес посылки в кг")
-    parcel_price_usd: Decimal = Field(
+    weight: float = Field(..., gt=0, description="Вес посылки в кг")
+    parcel_price_usd: float = Field(
         ..., ge=0, description="Стоимость содержимого в долларах"
     )
     type_id: int = Field(..., description="ID типа посылки (связь parcel_types)")
+
+
+class ParcelCreateDB(ParcelCreate):
+    model_config = ConfigDict(from_attributes=True)
+
+    delivery_price_rub: Decimal
 
 
 class ParcelCreateResponse(BaseModel):
