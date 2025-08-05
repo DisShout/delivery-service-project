@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_serializer
 from uuid import UUID
 from decimal import Decimal
 from datetime import datetime
@@ -14,11 +14,19 @@ class ParcelCreate(BaseModel):
     )
     type_id: int = Field(..., description="ID типа посылки (связь parcel_types)")
 
+    @field_serializer("weight", "parcel_price_usd")
+    def serialize_decimal(self, value: Decimal, _info):
+        return float(value)
+
 
 class ParcelCreateDB(ParcelCreate):
     model_config = ConfigDict(from_attributes=True)
 
     delivery_price_rub: Decimal
+
+    @field_serializer("delivery_price_rub")
+    def serialize_delivery_price(self, value: Decimal | None, _info):
+        return float(value) if value is not None else None
 
 
 class ParcelCreateResponse(BaseModel):
@@ -48,10 +56,14 @@ class ParcelRead(BaseModel):
     name: str
     weight: Decimal
     parcel_price_usd: Decimal
-    delivery_price_rub: Decimal | None
+    delivery_price_rub: float | None
     type_name: str
     created_at: datetime
     updated_at: datetime
+
+    @field_serializer("weight", "parcel_price_usd", "delivery_price_rub")
+    def serialize_decimal(self, value: Decimal | None, _info):
+        return float(value) if value is not None else None
 
 
 class ParcelReadByID(BaseModel):
@@ -61,4 +73,8 @@ class ParcelReadByID(BaseModel):
     weight: Decimal
     type_name: str
     parcel_price_usd: Decimal
-    delivery_price_rub: Decimal | None
+    delivery_price_rub: float | None
+
+    @field_serializer("weight", "parcel_price_usd", "delivery_price_rub")
+    def serialize_decimal(self, value: Decimal | None, _info):
+        return float(value) if value is not None else None

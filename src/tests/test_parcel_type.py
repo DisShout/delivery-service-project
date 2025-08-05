@@ -3,7 +3,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_get_parcel_types(async_client):
-    response = await async_client.get("/parcel-types/")
+    response = await async_client.get("/parcel_types/")
     assert response.status_code == 200
     parcel_types = response.json()
 

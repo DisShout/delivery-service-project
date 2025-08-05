@@ -9,11 +9,12 @@ class SessionMiddleware(BaseHTTPMiddleware):
 
         if not session_id:
             session_id = str(uuid.uuid4())
-            response: Response = await call_next(request)
-            response.set_cookie(key="session_id", value=session_id)
-            request.state.session_id = session_id
-            return response
 
         request.state.session_id = session_id
+
         response: Response = await call_next(request)
+
+        if not request.cookies.get("session_id"):
+            response.set_cookie(key="session_id", value=session_id)
+
         return response

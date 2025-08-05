@@ -16,8 +16,6 @@ class Settings(BaseSettings):
     DB_HOST: str
     DB_PORT: int
 
-    TEST_DB_NAME: str
-
     REDIS_HOST: str
     REDIS_PORT: int
 
@@ -28,8 +26,7 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL(self) -> str:
-        db_name = self.TEST_DB_NAME if self.MODE == "TEST" else self.DB_NAME
-        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{db_name}"
+        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
