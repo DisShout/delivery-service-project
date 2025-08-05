@@ -46,7 +46,6 @@ async def async_client(db_session):
 async def seed_parcel_types(db_session):
     from src.app.models import ParcelType
 
-    # Чистим таблицу перед вставкой
     await db_session.execute(text("DELETE FROM parcel_types"))
     await db_session.commit()
 
