@@ -30,8 +30,8 @@ class RabbitMQConsumer(BaseRabbitMQClient):
     async def _declare_or_get_queue(self, channel):
         """Объявляет или получает очередь RabbitMQ."""
         exchange = await channel.declare_exchange(
-            self.rabbit_topic,  # "parcel"
-            type="direct",  # можно fanout или topic, зависит от логики
+            self.rabbit_topic,
+            type="direct",
             durable=True,
         )
 

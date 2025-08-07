@@ -1,9 +1,10 @@
 import httpx
+from src.app.core.config import settings
 
 
 class CurrencyClient:
     def __init__(self):
-        self.url = "https://www.cbr-xml-daily.ru/daily_json.js"
+        self.url = settings.CBR_URL
 
     async def get_current_currency(self):
         async with httpx.AsyncClient() as client:

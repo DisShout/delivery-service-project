@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     RABBITMQ_HOST: str
     RABBITMQ_PORT: int
 
+    CBR_URL: str
+
     @property
     def DATABASE_URL(self) -> str:
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
@@ -34,3 +36,6 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings():
     return Settings()
+
+
+settings = get_settings()
